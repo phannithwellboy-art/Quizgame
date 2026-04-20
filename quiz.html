@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nursing Quiz Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --error-color: #e74c3c;
+            --bg-color: #ecf0f1;
+        }
+        body {
+            font-family: 'Kantumruy Pro', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        #quiz-container {
+            background: white;
+            width: 90%;
+            max-width: 700px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid var(--bg-color);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+        }
+        .question {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+        }
+        .options {
+            display: grid;
+            gap: 12px;
+        }
+        button.opt {
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            background: white;
+            cursor: pointer;
+            text-align: left;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: 0.3s;
+        }
+        button.opt:hover:not([disabled]) {
+            border-color: var(--secondary-color);
+            background-color: #f7fbfe;
+        }
+        button.correct {
+            background-color: var(--success-color) !important;
+            color: white;
+            border-color: var(--success-color);
+        }
+        button.wrong {
+            background-color: var(--error-color) !important;
+            color: white;
+            border-color: var(--error-color);
+        }
+        .footer {
+            margin-top: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #next-btn {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: none;
+            font-family: inherit;
+        }
+        .score-box { font-weight: bold; color: var(--primary-color); }
+        .progress-bar {
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        #progress-fill {
+            height: 100%;
+            background: var(--secondary-color);
+            width: 0%;
+            transition: 0.4s;
+        }
+    </style>
+</head>
+<body>
+
+<div id="quiz-container">
+    <div class="header">
+        <h2 style="margin:0">🏥 ហ្គេមវិញ្ញាសាគិលានុបដ្ឋាក</h2>
+    </div>
+    
+    <div class="progress-bar"><div id="progress-fill"></div></div>
+    
+    <div id="quiz-content">
+        <div class="question" id="question"></div>
+        <div class="options" id="options"></div>
+    </div>
+
+    <div class="footer">
+        <div class="score-box" id="score-display">ពិន្ទុ៖ 0</div>
+        <button id="next-btn" onclick="handleNext()">សំណួរបន្ទាប់ ➔</button>
+    </div>
+</div>
+
+<script>
+    const questions = [
+        { q: "តើអ្វីជាគោលដៅចម្បងនៃការអនុវត្តផ្អែកលើភស្តុតាង (EBP)?", o: ["បញ្ចូលគ្នានូវការស្រាវជ្រាវ ជំនាញគ្លីនិក និងចំណង់ចំណូលចិត្តអ្នកជំងឺ", "ធ្វើតាមការណែនាំរបស់គ្រូពេទ្យដោយគ្មានសំណួរ", "ពឹងផ្អែកតែលើបទពិសោធន៍ផ្ទាល់ខ្លួន", "កាត់បន្ថយការចំណាយលើការថែទាំ"], a: 0 },
+        { q: "ដើម្បីបង្កើតរចនាសម្ពន្ធ័បាន អ្នកដឹកនាំត្រូវមានអ្វីជាគោលចំបង?", o: ["អគារ", "ថវិការ", "បុគ្គលិក", "ចក្ខុវិស័យ"], a: 3 },
+        { q: "តើអក្សរ 'P' នៅក្នុង PICO(T) តំណាងឱ្យអ្វី?", o: ["Problem (បញ្ហា)", "Procedure (និតិវិធី)", "Patient/Population (អ្នកជំងឺ)", "Prediction (ការព្យាករណ៍)"], a: 2 },
+        { q: "តើចាប់ពីឆ្នាំណា ដែលក្រសួងសុខាភិបាល រៀបចំប្រព័ន្ធសុខាភិបាលថ្មីផ្តោតលើថ្នាក់ស្រុក?", o: ["១៩៩៣", "១៩៩៤", "១៩៩៥", "១៩៩៦"], a: 2 },
+        { q: "តើ 'Communication' មានន័យដូចម្តេច?", o: ["ការបញ្ជូនព័ត៌មានតែម្ខាង", "ការផ្លាស់ប្តូរព័ត៌មានរវាងមនុស្ស ២ នាក់ ឬច្រើននាក់", "ការស្តាប់បង្គាប់តាមបញ្ជា", "ការរាយការណ៍តែម្នាក់ឯង"], a: 1 },
+        { q: "កំណត់ត្រាសុខភាពពេញមួយជីវិតតាមកុំព្យូទ័រសម្រាប់បុគ្គលម្នាក់ៗហៅថា៖", o: ["EMR", "EHR (កំណត់ត្រាសុខភាពអេឡិចត្រូនិច)", "PHR", "mHealth"], a: 1 },
+        { q: "តើអ្នកដឹកនាំបែបណាដែលចូលចិត្តសម្រេចចិត្តតែម្នាក់ឯង?", o: ["Democratic Leader", "Autocratic Leader", "Laissez-faire Leader", "Bureaucratic Leader"], a: 1 },
+        { q: "តើគុណភាពថែទាំសុខភាពតាម WHO មានសមាសភាគប៉ុន្មាន?", o: ["៤", "៥", "៦", "៧"], a: 2 },
+        { q: "តើអ្វីជាកិច្ចការសំខាន់បំផុតមួយក្នុងការអនុវត្តឱសថសម័យទំនើប?", o: ["ការលក់ថ្នាំ", "ការគ្រប់គ្រងព័ត៌មាន", "ការតុបតែងមន្ទីរពេទ្យ", "ការជួលបុគ្គលិក"], a: 1 },
+        { q: "តើការទំនាក់ទំនងមុខទល់មុខ (Face-to-face) ទាក់ទងនឹងអ្វីខ្លះ?", o: ["សំឡេង ពន្លឺ និងកម្ដៅ", "តែអ៊ីមែលប៉ុណ្ណោះ", "ការផ្ញើសារអក្សរ", "ការប្រើប្រាស់បណ្តាញសង្គម"], a: 0 }
+    ];
+
+    let currentIdx = 0;
+    let score = 0;
+
+    function initQuiz() {
+        const q = questions[currentIdx];
+        document.getElementById("question").innerText = `${currentIdx + 1}. ${q.q}`;
+        const optContainer = document.getElementById("options");
+        optContainer.innerHTML = "";
+        
+        q.o.forEach((opt, i) => {
+            const btn = document.createElement("button");
+            btn.className = "opt";
+            btn.innerText = opt;
+            btn.onclick = () => selectOption(i, btn);
+            optContainer.appendChild(btn);
+        });
+
+        document.getElementById("next-btn").style.display = "none";
+        updateProgress();
+    }
+
+    function selectOption(idx, btn) {
+        const correct = questions[currentIdx].a;
+        const allBtns = document.querySelectorAll(".opt");
+        
+        allBtns.forEach(b => b.disabled = true);
+
+        if(idx === correct) {
+            btn.classList.add("correct");
+            score++;
+            document.getElementById("score-display").innerText = `ពិន្ទុ៖ ${score}`;
+        } else {
+            btn.classList.add("wrong");
+            allBtns[correct].classList.add("correct");
+        }
+        document.getElementById("next-btn").style.display = "block";
+    }
+
+    function handleNext() {
+        currentIdx++;
+        if(currentIdx < questions.length) {
+            initQuiz();
+        } else {
+            showResult();
+        }
+    }
+
+    function updateProgress() {
+        const percent = ((currentIdx) / questions.length) * 100;
+        document.getElementById("progress-fill").style.width = percent + "%";
+    }
+
+    function showResult() {
+        document.getElementById("quiz-content").innerHTML = `
+            <div style="text-align:center; padding: 20px;">
+                <h1 style="font-size: 3rem">🏆</h1>
+                <h2>ការប្រកួតបានបញ្ចប់!</h2>
+                <p style="font-size: 1.2rem">អ្នកឆ្លើយត្រូវ <b>${score}</b> ក្នុងចំណោម <b>${questions.length}</b></p>
+                <button onclick="location.reload()" style="padding:10px 20px; cursor:pointer; background:var(--primary-color); color:white; border:none; border-radius:5px;">លេងម្តងទៀត</button>
+            </div>
+        `;
+        document.getElementById("next-btn").style.display = "none";
+        document.getElementById("progress-fill").style.width = "100%";
+    }
+
+    initQuiz();
+</script>
+
+</body>
+</html>
